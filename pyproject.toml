@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "euler_bernoulli_beam_solver"
+version = "0.1.0"
+description = "Cubic Hermite Euler-Bernoulli beam element; Galerkin k vs Hibbeler PL^3/3EI"
+readme = "README.md"
+authors = [{ name = "Jullian J. Arredondo", email = "arredondojullianjoseph@gmail.com" }]
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24.0",
+]

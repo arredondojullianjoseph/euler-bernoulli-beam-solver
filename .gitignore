@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+
+# Local study notes. Do not commit or push.
+LOCAL_PHYSICS.md
+MATH.md
+
