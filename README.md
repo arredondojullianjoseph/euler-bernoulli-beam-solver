@@ -1,5 +1,7 @@
 # Euler-Bernoulli Beam Solver
 
+[![tests](https://github.com/arredondojullianjoseph/euler-bernoulli-beam-solver/actions/workflows/tests.yml/badge.svg)](https://github.com/arredondojullianjoseph/euler-bernoulli-beam-solver/actions/workflows/tests.yml)
+
 Cubic Hermite beam. Galerkin $k$ vs Hibbeler. Cantilever: one element, tip relative error $2.6\times 10^{-16}$. Simply-supported: two equal elements so $L/2$ is a node.
 
 **Author:** Jullian J. Arredondo (jjarredondo@liberty.edu)
