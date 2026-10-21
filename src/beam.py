@@ -2,12 +2,14 @@
 beam.py
 
 Cantilever: one element vs Hibbeler PL^3 / 3EI.
-Simply-supported: two equal elements so L/2 is a node vs 5qL^4 / 384EI.
+Simply-supported: n equal elements, uniform q.
 """
+
+from pathlib import Path
 
 import numpy as np
 
-from closed_form import E, I, L, P, Q, cantilever_tip, simply_supported_midspan
+from closed_form import E, I, L, P, Q, cantilever_tip, simply_supported_field, simply_supported_midspan
 from stiffness import element_stiffness
 
 
@@ -24,13 +26,14 @@ def hermite_shape(xi, le):
 
 
 def evaluate_w(u, x, length):
-    """Deflection at x. 4-DOF: one element. 6-DOF: two equal elements on [0, length]."""
-    if len(u) == 4:
-        return float(hermite_shape(x / length, length) @ u)
-    le = 0.5 * length
-    if x <= le:
-        return float(hermite_shape(x / le, le) @ u[:4])
-    return float(hermite_shape((x - le) / le, le) @ u[2:6])
+    """Deflection at x. Find the element, then mix the four local N."""
+    n_el = len(u) // 2 - 1
+    le = length / n_el
+    e = int(x / le)
+    if e >= n_el:
+        e = n_el - 1
+    xi = (x - e * le) / le
+    return float(hermite_shape(xi, le) @ u[2 * e : 2 * e + 4])
 
 
 def cantilever():
@@ -48,9 +51,8 @@ def cantilever():
     return u
 
 
-def simply_supported():
-    """Pins on w at both ends. Uniform q. Two equal elements; midspan is nodal w."""
-    n_el = 2
+def simply_supported(n_el=2):
+    """Pins on w at both ends. Uniform q. n equal elements. Default 2 so L/2 is a node."""
     le = L / n_el
     n_dof = 2 * (n_el + 1)
     K = np.zeros((n_dof, n_dof))
@@ -69,7 +71,28 @@ def simply_supported():
     return u
 
 
+def mesh_sweep():
+    """2, 4, 8, 16. Each row: n_el, h, w_fem(L/4), w_exact(L/4), rel, max |dw|."""
+    x = 0.25 * L
+    w_ex = simply_supported_field(x)
+    rows = []
+    for n_el in (2, 4, 8, 16):
+        u = simply_supported(n_el)
+        w_fem = evaluate_w(u, x, L)
+        rel = abs(w_fem - w_ex) / abs(w_ex)
+        max_abs = 0.0
+        for i in range(101):
+            xi = L * i / 100.0
+            dw = abs(evaluate_w(u, xi, L) - simply_supported_field(xi))
+            if dw > max_abs:
+                max_abs = dw
+        rows.append((n_el, L / n_el, w_fem, w_ex, rel, max_abs))
+    return rows
+
+
 if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+
     u = cantilever()
     w_tip = u[2]
     w_ref = cantilever_tip()
@@ -85,3 +108,26 @@ if __name__ == "__main__":
     print(f"w_mid (2 elements)     = {w_mid:.12e} m")
     print(f"5qL^4/384EI            = {w_mid_ref:.12e} m")
     print(f"relative error         = {abs(w_mid - w_mid_ref) / abs(w_mid_ref):.6e}")
+
+    rows = mesh_sweep()
+    print("n_el  h       w_fem(L/4)        w_exact(L/4)      rel          max|dw|     factor")
+    last = None
+    hs = []
+    errs = []
+    for n_el, h, w_fem, w_ex, rel, max_abs in rows:
+        factor = (last / max_abs) if last is not None else float("nan")
+        print(
+            f"{n_el:4d}  {h:.4f}  {w_fem:.12e}  {w_ex:.12e}  {rel:.6e}  {max_abs:.6e}  {factor:.4f}"
+        )
+        last = max_abs
+        hs.append(h)
+        errs.append(max_abs)
+
+    plot = Path(__file__).resolve().parent.parent / "error_vs_h.png"
+    plt.loglog(hs, errs, "o-")
+    plt.xlabel("h (m)")
+    plt.ylabel("max |w_fem - w_exact| (m)")
+    plt.title("SS uniform q, error vs h")
+    plt.tight_layout()
+    plt.savefig(plot)
+    print(f"plot {plot}")
