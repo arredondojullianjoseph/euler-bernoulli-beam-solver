@@ -51,6 +51,15 @@ Two-element $L/4$ is $1.75\%$ low (about $1.8\%$). After that $L/4$ is a node an
 
 Plot: `error_vs_h.png` (log-log $\max|dw|$ vs $h$).
 
+## Limitations
+
+- 1D beam only.
+- Euler-Bernoulli: no shear; not Timoshenko.
+- Linear elastic.
+- Static only; no vibration, no time integration.
+- Not a frame.
+- Not commercial FEA.
+
 ## Files
 
 - `src/closed_form.py` — $L,E,I,P,q$, Hibbeler, and the SS field
